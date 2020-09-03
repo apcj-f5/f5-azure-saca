@@ -2,6 +2,13 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "6.0.2.0",
     "parameters": {
+                    "governmentCloudRegion": {
+            "defaultValue": true,
+            "metadata": {
+                "description": "Type of cloud this template will deploy into, ensure to select false for commercial."
+            },
+            "type": "bool"
+        },
         "adminUsername": {
             "defaultValue": "xadmin",
             "metadata": {
@@ -40,9 +47,9 @@
             "type": "string"
         },
         "Tier1DeclarationUrl": {
-            "defaultValue": "https://raw.githubusercontent.com/f5devcentral/f5-azure-saca/master/SACAv2/AS3/paygsccaBaseline.json",
+            "defaultValue": "https://raw.githubusercontent.com/Mikej81/f5-securecloud-AS3/master/dist/arm/3.16.0/sccaBaseline.json",
             "metadata": {
-                "description": "URL for the AS3 (https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/3.5.1/) declaration JSON file to be deployed. Leave as **NOT_SPECIFIED** to deploy without a service configuration."
+                "description": "URL for the AS3 (https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/3.16.0/) declaration JSON file to be deployed. Leave as **NOT_SPECIFIED** to deploy without a service configuration."
             },
             "type": "string"
         },
@@ -360,6 +367,11 @@
         }
     },
     "variables": {
+                        "cloudRegion": {
+            "false": ".cloudapp.azure.com",
+            "true": ".cloudapp.usgovcloudapi.net"
+        },
+        "cloudPath": "[if(parameters('governmentCloudRegion'), variables('cloudRegion').true, variables('cloudRegion').false)]",
         "tagValues": "",
         "adminPasswordOrKey": "[replace(parameters('adminPasswordOrKey'),'\\n', '\n')]",
         "allowUsageAnalytics": {
@@ -469,16 +481,16 @@
 
         "failoverCmdArray": {
             "No": {
-                "first": "[concat('tmsh modify cm device ', concat(variables('instanceName'), '0.', variables('location'), '.cloudapp.usgovcloudapi.net'), ' unicast-address none')]",
-                "second": "[concat('tmsh modify cm device ', concat(variables('instanceName'), '1.', variables('location'), '.cloudapp.usgovcloudapi.net'), ' unicast-address none')]",
-                "third": "[concat('tmsh modify cm device ', concat(variables('instanceName'), '2.', variables('location'), '.cloudapp.usgovcloudapi.net'), ' unicast-address none')]",
-                "fourth": "[concat('tmsh modify cm device ', concat(variables('instanceName'), '3.', variables('location'), '.cloudapp.usgovcloudapi.net'), ' unicast-address none')]"
+                "first": "[concat('tmsh modify cm device ', concat(variables('instanceName'), '0.', variables('location'), variables('cloudPath')), ' unicast-address none')]",
+                "second": "[concat('tmsh modify cm device ', concat(variables('instanceName'), '1.', variables('location'), variables('cloudPath')), ' unicast-address none')]",
+                "third": "[concat('tmsh modify cm device ', concat(variables('instanceName'), '2.', variables('location'), variables('cloudPath')), ' unicast-address none')]",
+                "fourth": "[concat('tmsh modify cm device ', concat(variables('instanceName'), '3.', variables('location'), variables('cloudPath')), ' unicast-address none')]"
             },
             "Yes": {
-                "first": "[concat('tmsh modify cm device ', concat(variables('instanceName'), '0.', variables('location'), '.cloudapp.usgovcloudapi.net'), ' unicast-address { { ip ', variables('intSubnetPrivateAddress'), ' port 1026 } } mirror-ip ', variables('intSubnetPrivateAddress'))]",
-                "second": "[concat('tmsh modify cm device ', concat(variables('instanceName'), '1.', variables('location'), '.cloudapp.usgovcloudapi.net'), ' unicast-address { { ip ', variables('intSubnetPrivateAddress1'), ' port 1026 } } mirror-ip ', variables('intSubnetPrivateAddress1'))]",
-                "third": "[concat('tmsh modify cm device ', concat(variables('instanceName'), '2.', variables('location'), '.cloudapp.usgovcloudapi.net'), ' unicast-address { { ip ', variables('intSubnet2PrivateAddress'), ' port 1026 } } mirror-ip ', variables('intSubnet2PrivateAddress'))]",
-                "fourth": "[concat('tmsh modify cm device ', concat(variables('instanceName'), '3.', variables('location'), '.cloudapp.usgovcloudapi.net'), ' unicast-address { { ip ', variables('intSubnet2PrivateAddress1'), ' port 1026 } } mirror-ip ', variables('intSubnet2PrivateAddress1'))]"
+                "first": "[concat('tmsh modify cm device ', concat(variables('instanceName'), '0.', variables('location'), variables('cloudPath')), ' unicast-address { { ip ', variables('intSubnetPrivateAddress'), ' port 1026 } } mirror-ip ', variables('intSubnetPrivateAddress'))]",
+                "second": "[concat('tmsh modify cm device ', concat(variables('instanceName'), '1.', variables('location'), variables('cloudPath')), ' unicast-address { { ip ', variables('intSubnetPrivateAddress1'), ' port 1026 } } mirror-ip ', variables('intSubnetPrivateAddress1'))]",
+                "third": "[concat('tmsh modify cm device ', concat(variables('instanceName'), '2.', variables('location'), variables('cloudPath')), ' unicast-address { { ip ', variables('intSubnet2PrivateAddress'), ' port 1026 } } mirror-ip ', variables('intSubnet2PrivateAddress'))]",
+                "fourth": "[concat('tmsh modify cm device ', concat(variables('instanceName'), '3.', variables('location'), variables('cloudPath')), ' unicast-address { { ip ', variables('intSubnet2PrivateAddress1'), ' port 1026 } } mirror-ip ', variables('intSubnet2PrivateAddress1'))]"
             }
         },
 
@@ -653,7 +665,7 @@
 
         "vdmsSubnetName": "VDMS",
         "windowsOSVersion": "2019-Datacenter",
-        "WinvmName": "[concat(parameters('instanceName'), '-win-jb')]",
+        "WinvmName": "Bastion-Win-JB",
         "jbimageOffer": "UbuntuServer",
         "jbimagePublisher": "Canonical",
         "jblinuxConfiguration": {

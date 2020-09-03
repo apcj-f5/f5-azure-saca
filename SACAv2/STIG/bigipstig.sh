@@ -10,7 +10,7 @@
 echo
 echo "###############################################"
 echo " BASHSRG - Bash STIG/SRG Configuration Script"
-echo " Michael Coleman.  M.Coleman@F5.com. Modified by r.eastman@f5.com on March 5, 2019"
+echo " Michael Coleman.  M.Coleman@F5.com. Modified by r.eastman@f5.com"
 
 echo "###############################################"
 tmsh modify sys sshd inactivity-timeout 900
@@ -57,7 +57,19 @@ tmsh modify auth password-policy required-lowercase 2
 tmsh modify auth password-policy required-numeric 2
 tmsh modify auth password-policy required-special 2
 tmsh modify auth password-policy required-uppercase 2
-tmsh modify sys httpd include \"'FileETag MTime Size'\"
+tmsh modify sys httpd include '"
+# File ETAG CVE
+FileETag MTime Size
+
+# CVE-2020-5902
+<LocationMatch ";">
+	Redirect 404 /
+</LocationMatch>
+<LocationMatch "hsqldb">
+	Redirect 404 /
+</LocationMatch>"'
+tmsh save sys config
+bigstart restart httpd
 #tmsh modify sys dns name-servers add { x.x.x.x x.x.x.x }
 #tmsh modify sys ntp servers add { x.x.x.x x.x.x.x }
 #tmsh modify sys dns search add { demo.local demo.f5demo.local }
